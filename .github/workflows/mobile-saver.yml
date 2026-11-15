@@ -2,7 +2,7 @@ name: Build Mobile Saver APK
 on:
   workflow_dispatch:
   push:
-    branches: [mobile-saver]
+    branches: [Mobile-saver]
 jobs:
   build:
     runs-on: ubuntu-latest
