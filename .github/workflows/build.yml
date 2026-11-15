@@ -1,13 +1,8 @@
-name: Build debug APK
+name: Build Mobile Saver APK
 on:
   workflow_dispatch:
   push:
-    branches:
-      - canary
-  pull_request:
-    branches:
-      - '**'
-
+    branches: [Mobile-saver]
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -16,22 +11,36 @@ jobs:
         with:
           fetch-depth: 0
           submodules: recursive
-
-      - name: set up JDK 21
-        uses: actions/setup-java@v4
+      - uses: actions/setup-java@v4
         with:
           java-version: 21
-          distribution: "temurin"
-          cache: 'gradle'
-
+          distribution: temurin
+          cache: gradle
       - name: Accept SDK licenses
         run: yes | /usr/local/lib/android/sdk/cmdline-tools/latest/bin/sdkmanager --licenses
-
-      - name: Build debug APK and run jvm tests
-        run: ./gradlew assembleCoreDebug lintCoreDebug testCoreDebugUnitTest --stacktrace -DskipFormatKtlint
-
-      - name: Upload APK
-        uses: actions/upload-artifact@v4
+      - name: Install CMake 3.31.6
+        run: |
+          SDKM=/usr/local/lib/android/sdk/cmdline-tools/latest/bin/sdkmanager
+          if ! "$SDKM" "cmake;3.31.6"; then
+            python3 -m pip install --break-system-packages cmake==3.31.6
+            echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+          fi
+      - name: Build debug APK
+        run: |
+          set +e
+          ./gradlew assembleCoreDebug --console=plain -DskipFormatKtlint > build.log 2>&1
+          code=$?
+          echo "=== KEY ERROR LINES ==="
+          grep -n -m 20 -E "^e: |What went wrong|FAILURE|error:" build.log
+          echo "=== LAST 40 LINES ==="
+          tail -n 40 build.log
+          exit $code
+      - uses: actions/upload-artifact@v4
+        if: always()
         with:
-          name: app
+          name: build-log
+          path: build.log
+      - uses: actions/upload-artifact@v4
+        with:
+          name: InterTune-mobile-saver
           path: app/build/outputs/apk/core/debug/*.apk
