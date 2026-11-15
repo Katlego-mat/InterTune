@@ -165,8 +165,9 @@ object BatteryUse {
 
     // Downloads, the player's background and the song cache.
 
-    /** Download on Wi-Fi only as it is set, and always in Saver. */
-    fun downloadsOnWifiOnly(chosen: Boolean, mode: BatteryMode): Boolean = chosen || mode == BatteryMode.SAVER
+        /** Wi-Fi only as set, and in Saver too unless mobile data is allowed in Saver. */
+    fun downloadsOnWifiOnly(chosen: Boolean, mode: BatteryMode, allowMobileInSaver: Boolean = false): Boolean =
+        chosen || (mode == BatteryMode.SAVER && !allowMobileInSaver)
 
     /**
      * The player's background: [blur] in place of Living blur in Saver, which costs about half a
